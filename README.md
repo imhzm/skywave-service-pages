@@ -1,6 +1,6 @@
 # Sky Wave service pages
 
-Three independent Arabic, right-to-left static websites for verified Sky Wave service areas:
+Three independent Arabic, right-to-left static service pages built around capabilities Sky Wave lists publicly:
 
 - `1/` — digital services for clinics
 - `2/` — digital marketing for real estate projects
