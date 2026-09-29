@@ -1,25 +1,17 @@
-# Sky Wave service pages
+# Landing Pages Demos
 
-Three independent Arabic, right-to-left static service pages built around capabilities Sky Wave lists publicly:
+Three independent Arabic, right-to-left concept pages, each with its own original visual theme:
 
-- `1/` — digital services for clinics
-- `2/` — digital marketing for real estate projects
-- `3/` — workflow automation and WhatsApp bots
+- `1/` — Laura Clinic concept, with an ivory and teal visual style
+- `2/` — Afaq Residence concept, with a dark navy and gold visual style
+- `3/` — Masar AI concept, with a purple and blue software interface
 
-Each site uses plain HTML, CSS, and JavaScript. There is no package installation or build step. To preview them from the workspace root:
+These are portfolio demonstrations. The brands, people, property details, interface metrics, prices, testimonials, and other sample content are illustrative and must not be treated as verified business facts. Forms and interface actions are demonstrative; do not submit real customer or medical information.
+
+The pages use plain HTML, CSS, and JavaScript. From this folder, start a local preview server:
 
 ```powershell
 python -m http.server 8000 --bind 127.0.0.1
 ```
 
-Open `http://127.0.0.1:8000/1/`, `http://127.0.0.1:8000/2/`, or `http://127.0.0.1:8000/3/`.
-
-The sites describe Sky Wave's published services. Their contact buttons open a service-specific WhatsApp draft addressed to Sky Wave; the visitor must send it. The first page references a published clinic website from Sky Wave's portfolio; the third references the WhatsApp bot entry in the official portfolio. The real-estate page's architecture image is explicitly labeled as an illustration and does not represent a real listing or completed project. Project-specific pricing, inventory, availability, customer reviews, performance claims, and medical facts are omitted unless an approved source is provided.
-
-Official business contact details displayed on each site:
-
-- Phone: +20 106 789 4321
-- Email: admin@skywaveads.com
-- Address: Emirates Street, New Damietta, Egypt
-
-Each numbered folder can be deployed as an independent static site. The domain and hosting mapping should be set only after its DNS target and document root are confirmed.
+Then open `http://127.0.0.1:8000/1/`, `http://127.0.0.1:8000/2/`, or `http://127.0.0.1:8000/3/`.
