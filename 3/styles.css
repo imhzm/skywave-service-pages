@@ -1033,3 +1033,7 @@ h1, h2, h3 { line-height: 1.35; }
 }
 
 .assistant-mascot > img { width: 100%; height: auto; display: block; object-fit: contain; }
+
+.concept-badge { display: inline-flex; width: fit-content; max-width: 100%; margin: 0 0 12px; padding: 6px 10px; color: #3f4a54; background: rgb(255 255 255 / 82%); border: 1px solid rgb(67 84 94 / 18%); border-radius: 999px; font-size: 11px; line-height: 1.6; }
+
+.form-contact-options[hidden] { display: none !important; }

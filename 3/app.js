@@ -107,7 +107,7 @@ document.querySelectorAll("[data-demo-form]").forEach((form) => {
     const team = form.elements.namedItem("team")?.selectedOptions[0]?.textContent.trim() ?? "";
     const need = form.elements.namedItem("need")?.selectedOptions[0]?.textContent.trim() ?? "";
     const message = [
-      "مرحبًا، أود طلب عرض توضيحي حول مسار الذكي ومناقشة احتياج فريقي لإدارة العملاء ومتابعة المبيعات.",
+      "مرحبًا، اطلعت على التصور التصميمي لمنصة مسار الذكي وأرغب في مناقشة فكرة منتج مشابه مع سكاي ويف.",
       `الاسم: ${name}`,
       ...(email ? [`البريد الإلكتروني: ${email}`] : []),
       ...(phone ? [`رقم الهاتف: ${phone}`] : []),
@@ -123,16 +123,16 @@ document.querySelectorAll("[data-demo-form]").forEach((form) => {
     }
     if (emailLink) {
       const emailParams = new URLSearchParams({
-        subject: "طلب عرض توضيحي حول مسار الذكي",
+        subject: "مناقشة تصور منتج SaaS مشابه",
         body: message,
       });
-      emailLink.href = `mailto:skywaveads@gmail.com?${emailParams.toString()}`;
+      emailLink.href = `mailto:admin@skywaveads.com?${emailParams.toString()}`;
     }
 
     if (contactOptions) contactOptions.hidden = false;
     if (status) {
       status.hidden = false;
-      status.textContent = "راجع البيانات واختر وسيلة التواصل. ستُفتح مسودة الرسالة للمراجعة، ولن تُرسل حتى تؤكد الإرسال داخل التطبيق.";
+      status.textContent = "راجع البيانات واختر وسيلة التواصل. ستُفتح مسودة لمناقشة هذا التصور مع سكاي ويف، ولن تُرسل حتى تؤكد الإرسال داخل التطبيق.";
       status.focus();
     }
   };

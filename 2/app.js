@@ -171,30 +171,43 @@ document.addEventListener("keydown", (event) => {
 
 document.querySelectorAll("[data-inquiry-form]").forEach((form) => {
   const status = form.querySelector("[data-form-status]");
-  const fields = [...form.querySelectorAll("input, select, textarea")];
-  const reviewButton = form.querySelector("[data-inquiry-review]");
-  const reviewInquiry = () => {
-    const invalidField = fields.find((field) => !field.checkValidity());
-    if (invalidField) {
-      invalidField.reportValidity();
-      invalidField.focus();
-      return;
-    }
-    if (!status) return;
-    status.hidden = false;
-    status.textContent = "اكتملت مراجعة البيانات. لم يُرسل الطلب أو تُحفظ أي معلومات.";
-  };
+  const contactOptions = form.querySelector("[data-contact-options]");
+  const whatsappLink = form.querySelector("[data-whatsapp-link]");
 
-  reviewButton?.addEventListener("click", reviewInquiry);
-  form.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" || !event.target.matches("input")) return;
-    event.preventDefault();
-    reviewInquiry();
+  form.addEventListener("input", () => {
+    if (status) status.hidden = true;
+    if (contactOptions) contactOptions.hidden = true;
   });
-  ["input", "change"].forEach((eventName) => {
-    form.addEventListener(eventName, () => {
-      if (status) status.hidden = true;
-    });
+  form.addEventListener("change", () => {
+    if (status) status.hidden = true;
+    if (contactOptions) contactOptions.hidden = true;
+  });
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+
+    const formData = new FormData(form);
+    const unit = form.elements.namedItem("unit")?.selectedOptions[0]?.textContent.trim() ?? "";
+    const message = [
+      "مرحبًا، اطلعت على تصور أفق ريزيدنس وأرغب في مناقشة تصميم موقع عقاري مشابه مع سكاي ويف.",
+      `الاسم: ${String(formData.get("name") ?? "").trim()}`,
+      `رقم الهاتف: ${String(formData.get("phone") ?? "").trim()}`,
+      ...(String(formData.get("email") ?? "").trim() ? [`البريد الإلكتروني: ${String(formData.get("email")).trim()}`] : []),
+      `نوع الوحدة التي أريد إبرازها في الموقع: ${unit}`,
+    ].join("\n");
+
+    if (whatsappLink) {
+      whatsappLink.href = `https://wa.me/201067894321?text=${encodeURIComponent(message)}`;
+      whatsappLink.target = "_blank";
+      whatsappLink.rel = "noopener noreferrer";
+    }
+    if (contactOptions) contactOptions.hidden = false;
+    if (status) {
+      status.textContent = "المسودة جاهزة للمراجعة. لن تُرسل إلا بعد تأكيدك داخل واتساب.";
+      status.hidden = false;
+    }
+    whatsappLink?.focus();
   });
 });
 

@@ -83,8 +83,17 @@ function fieldErrorMessage(field) {
 
 document.querySelectorAll("[data-demo-form]").forEach((form) => {
   const status = form.querySelector("[data-form-status]");
+  const contactOptions = form.querySelector("[data-contact-options]");
+  const whatsappLink = form.querySelector("[data-whatsapp-link]");
   const submitButton = form.querySelector('button[type="submit"]');
   const fields = [...form.querySelectorAll("input[required], select[required]")];
+
+  const resetContactOptions = () => {
+    if (status) status.hidden = true;
+    if (contactOptions) contactOptions.hidden = true;
+  };
+  form.addEventListener("input", resetContactOptions);
+  form.addEventListener("change", resetContactOptions);
 
   const clearFieldError = (field) => {
     const message = form.querySelector(`#${CSS.escape(field.id)}-error`);
@@ -125,10 +134,25 @@ document.querySelectorAll("[data-demo-form]").forEach((form) => {
       return;
     }
 
-    status.dataset.state = "success";
-    status.textContent = "شكرًا لك. هذه معاينة فقط؛ لم يُرسل طلبك ولم تُحفظ بياناتك.";
-    status.hidden = false;
-    submitButton?.focus();
+    const formData = new FormData(form);
+    const message = [
+      "مرحبًا، اطلعت على نموذج موقع عيادة لورا وأرغب في مناقشة تصميم موقع مشابه مع سكاي ويف.",
+      `الاسم: ${String(formData.get("name") ?? "").trim()}`,
+      `رقم التواصل: ${String(formData.get("phone") ?? "").trim()}`,
+      `نوع المشروع: ${String(formData.get("service") ?? "").trim()}`,
+    ].join("\n");
+    if (whatsappLink) {
+      whatsappLink.href = `https://wa.me/201067894321?text=${encodeURIComponent(message)}`;
+      whatsappLink.target = "_blank";
+      whatsappLink.rel = "noopener noreferrer";
+    }
+    if (contactOptions) contactOptions.hidden = false;
+    if (status) {
+      status.dataset.state = "success";
+      status.textContent = "المسودة جاهزة. افتحيها لمراجعتها، ولن تُرسل إلا بعد تأكيدكِ داخل واتساب.";
+      status.hidden = false;
+    }
+    whatsappLink?.focus();
   });
 
   if (submitButton) submitButton.disabled = false;
