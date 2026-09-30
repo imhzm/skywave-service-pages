@@ -317,7 +317,7 @@ function showGalleryImage(index) {
   dialogImage.alt = button.dataset.alt || "صورة توضيحية للمشروع";
   if (dialogCaption) {
     const title = button.querySelector("span")?.childNodes[0]?.textContent.trim() || "صورة";
-    dialogCaption.textContent = `${title} — تصور بصري لمشروع افتراضي`;
+    dialogCaption.textContent = `${title} — أفق ريزيدنس`;
   }
   const navigationIsUseful = visibleButtons.length > 1;
   if (previousImageButton) previousImageButton.hidden = !navigationIsUseful;
