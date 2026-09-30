@@ -21,11 +21,42 @@ mobileNav?.addEventListener("click", (event) => {
   if (event.target.closest("a")) closeMenu();
 });
 
+window.addEventListener("resize", () => {
+  if (window.innerWidth <= 900 || menuButton?.getAttribute("aria-expanded") !== "true") return;
+
+  const shouldRestoreFocus = mobileNav?.contains(document.activeElement) || document.activeElement === menuButton;
+  closeMenu();
+  if (shouldRestoreFocus) document.querySelector(".desktop-nav a")?.focus();
+}, { passive: true });
+
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && menuButton?.getAttribute("aria-expanded") === "true") {
     closeMenu({ returnFocus: true });
   }
 });
+
+const siteHeader = document.querySelector(".site-header");
+let headerIsCompact = false;
+let scrollFrameRequested = false;
+function updateHeaderOnScroll() {
+  if (scrollFrameRequested) return;
+  scrollFrameRequested = true;
+  window.requestAnimationFrame(() => {
+    scrollFrameRequested = false;
+    const shouldCompact = window.scrollY > 24;
+    if (shouldCompact !== headerIsCompact) {
+      headerIsCompact = shouldCompact;
+      siteHeader?.classList.toggle("is-compact", shouldCompact);
+    }
+
+    const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = scrollableHeight > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollableHeight)) : 0;
+    siteHeader?.style.setProperty("--scroll-progress", String(progress));
+  });
+}
+window.addEventListener("scroll", updateHeaderOnScroll, { passive: true });
+window.addEventListener("resize", updateHeaderOnScroll, { passive: true });
+updateHeaderOnScroll();
 
 const bookingDate = document.querySelector("#clinic-date");
 if (bookingDate) {
@@ -35,7 +66,15 @@ if (bookingDate) {
 }
 
 function fieldErrorMessage(field) {
-  if (field.validity.valueMissing) return "هذا الحقل مطلوب.";
+  if (field.validity.valueMissing) {
+    const requiredMessages = {
+      "clinic-name": "يرجى إدخال الاسم.",
+      "clinic-phone": "يرجى إدخال رقم الجوال.",
+      "clinic-service": "يرجى اختيار الخدمة المطلوبة.",
+      "clinic-date": "يرجى اختيار التاريخ المناسب.",
+    };
+    return requiredMessages[field.id] || "يرجى إكمال هذا الحقل.";
+  }
   if (field.validity.patternMismatch) return field.title || "تحققي من صيغة البيانات المدخلة.";
   if (field.validity.tooLong) return "النص أطول من الحد المسموح.";
   if (field.validity.rangeUnderflow) return "اختاري تاريخًا يبدأ من اليوم.";
@@ -44,6 +83,7 @@ function fieldErrorMessage(field) {
 
 document.querySelectorAll("[data-demo-form]").forEach((form) => {
   const status = form.querySelector("[data-form-status]");
+  const submitButton = form.querySelector('button[type="submit"]');
   const fields = [...form.querySelectorAll("input[required], select[required]")];
 
   const clearFieldError = (field) => {
@@ -56,8 +96,11 @@ document.querySelectorAll("[data-demo-form]").forEach((form) => {
   };
 
   fields.forEach((field) => {
-    field.addEventListener("input", () => clearFieldError(field));
-    field.addEventListener("change", () => clearFieldError(field));
+    const clearValidFieldError = () => {
+      if (field.checkValidity()) clearFieldError(field);
+    };
+    field.addEventListener("input", clearValidFieldError);
+    field.addEventListener("change", clearValidFieldError);
   });
 
   form.addEventListener("submit", (event) => {
@@ -85,8 +128,10 @@ document.querySelectorAll("[data-demo-form]").forEach((form) => {
     status.dataset.state = "success";
     status.textContent = "شكرًا لك. هذه معاينة فقط؛ لم يُرسل طلبك ولم تُحفظ بياناتك.";
     status.hidden = false;
-    form.querySelector('button[type="submit"]')?.focus();
+    submitButton?.focus();
   });
+
+  if (submitButton) submitButton.disabled = false;
 });
 
 document.querySelectorAll(".compare-range").forEach((range) => {
@@ -96,18 +141,56 @@ document.querySelectorAll(".compare-range").forEach((range) => {
   updatePosition();
 });
 
-const reviews = [...document.querySelectorAll("[data-review]")];
+const reviewCards = [...document.querySelectorAll("[data-review]")];
 const reviewControls = [...document.querySelectorAll("[data-review-target]")];
-reviewControls.forEach((button) => {
-  button.addEventListener("click", () => {
-    const selectedIndex = Number(button.dataset.reviewTarget);
-    reviews.forEach((review, index) => { review.hidden = index !== selectedIndex; });
-    reviewControls.forEach((control, index) => {
-      if (index === selectedIndex) control.setAttribute("aria-current", "true");
-      else control.removeAttribute("aria-current");
-    });
+const reviewCount = document.querySelector(".review-count");
+
+function showReview(index) {
+  if (index < 0 || index >= reviewCards.length) return;
+
+  reviewCards.forEach((card, cardIndex) => {
+    card.hidden = cardIndex !== index;
   });
+  reviewControls.forEach((control, controlIndex) => {
+    control.setAttribute("aria-pressed", String(controlIndex === index));
+  });
+  if (reviewCount?.firstChild) {
+    reviewCount.firstChild.nodeValue = `${String(index + 1).padStart(2, "0")} `;
+  }
+}
+
+reviewControls.forEach((button) => {
+  button.addEventListener("click", () => showReview(Number(button.dataset.reviewTarget)));
 });
+
+const floatingContact = document.querySelector(".floating-contact");
+const activeContentSections = new Set();
+
+if (floatingContact && "IntersectionObserver" in window) {
+  const syncFloatingContact = () => {
+    const shouldHide = activeContentSections.size > 0 && document.activeElement !== floatingContact;
+    floatingContact.classList.toggle("is-obscured", shouldHide);
+    if (shouldHide) {
+      floatingContact.setAttribute("aria-hidden", "true");
+      floatingContact.tabIndex = -1;
+    } else {
+      floatingContact.removeAttribute("aria-hidden");
+      floatingContact.removeAttribute("tabindex");
+    }
+  };
+
+  const contentSectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) activeContentSections.add(entry.target);
+      else activeContentSections.delete(entry.target);
+    });
+    syncFloatingContact();
+  }, { threshold: 0.05 });
+
+  document.querySelectorAll("#results, #testimonials").forEach((section) => contentSectionObserver.observe(section));
+  document.addEventListener("focusin", syncFloatingContact);
+  document.addEventListener("focusout", () => queueMicrotask(syncFloatingContact));
+}
 
 const reducedMotionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
 if (!reducedMotionPreference.matches && "IntersectionObserver" in window) {
@@ -119,7 +202,7 @@ if (!reducedMotionPreference.matches && "IntersectionObserver" in window) {
     });
   }, { threshold: 0.12, rootMargin: "0px 0px -32px 0px" });
 
-  document.querySelectorAll(".trust-strip, .section, .final-cta").forEach((section) => {
+  document.querySelectorAll(".trust-strip, .section, .booking-section, .final-cta").forEach((section) => {
     section.classList.add("reveal-on-scroll");
     revealObserver.observe(section);
   });

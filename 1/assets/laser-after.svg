@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" role="img" aria-labelledby="title desc">
+  <title id="title">رسم توضيحي لمتابعة نمو الشعر بين جلسات الليزر</title>
+  <desc id="desc">مقطع مبسط لسطح البشرة مع عدد أقل من الشعيرات الظاهرة، لأغراض الشرح فقط وليس نتيجة علاجية.</desc>
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#f5eee7"/><stop offset="1" stop-color="#ead7c8"/></linearGradient>
+    <linearGradient id="skin" x2="0" y2="1"><stop stop-color="#f2cbb4"/><stop offset="1" stop-color="#dfa88e"/></linearGradient>
+    <linearGradient id="follicle" x2="0" y2="1"><stop stop-color="#a96852"/><stop offset="1" stop-color="#79463d"/></linearGradient>
+  </defs>
+  <rect width="720" height="480" fill="url(#bg)"/>
+  <circle cx="584" cy="97" r="82" fill="#fff" opacity=".32"/>
+  <path d="M0 238c89-18 141 17 225 3s140-23 226-2 170 9 269-5v246H0Z" fill="url(#skin)"/>
+  <path d="M0 238c89-18 141 17 225 3s140-23 226-2 170 9 269-5" fill="none" stroke="#c8836f" stroke-width="5"/>
+  <g fill="none" stroke="url(#follicle)" stroke-width="8" stroke-linecap="round">
+    <path d="M80 242c2 60 1 119 18 150 15 27 38 22 42-8l9-102"/>
+    <path d="M276 234c-1 66 9 120 29 145 16 19 36 8 37-22l2-98"/>
+    <path d="M478 238c-2 57 5 107 23 133 18 26 40 14 42-20l4-83"/>
+  </g>
+  <g fill="#f6ddca" opacity=".75"><ellipse cx="150" cy="354" rx="23" ry="16"/><ellipse cx="245" cy="342" rx="23" ry="16"/><ellipse cx="344" cy="355" rx="23" ry="16"/><ellipse cx="448" cy="335" rx="23" ry="16"/><ellipse cx="547" cy="351" rx="23" ry="16"/></g>
+</svg>

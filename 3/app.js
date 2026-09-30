@@ -17,8 +17,43 @@ menuButton?.addEventListener("click", () => {
   if (opening) mobileNav.querySelector("a")?.focus();
 });
 
+function focusHashTarget(link) {
+  if (!link?.hash || link.hash.length < 2) return;
+  const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+  if (!target) return;
+  const labelledHeadingId = target.getAttribute("aria-labelledby")?.split(/\s+/)[0];
+  const focusTarget = (labelledHeadingId && document.getElementById(labelledHeadingId))
+    || (target.id === "main" && target.querySelector("h1"))
+    || (target.id === "top" && target.querySelector(".brand"))
+    || target;
+
+  window.requestAnimationFrame(() => {
+    const naturallyFocusable = focusTarget.matches("a[href], button, input, select, textarea, summary, [tabindex]");
+    if (!naturallyFocusable) focusTarget.setAttribute("tabindex", "-1");
+    focusTarget.focus({ preventScroll: true });
+    if (!naturallyFocusable) {
+      focusTarget.addEventListener("blur", () => focusTarget.removeAttribute("tabindex"), { once: true });
+    }
+  });
+}
+
 mobileNav?.addEventListener("click", (event) => {
-  if (event.target.closest("a")) closeMenu();
+  if (event.target.closest?.('a[href^="#"]')) closeMenu();
+});
+
+document.addEventListener("click", (event) => {
+  if (menuButton?.getAttribute("aria-expanded") !== "true") return;
+  if (menuButton.contains(event.target) || mobileNav?.contains(event.target)) return;
+  closeMenu();
+});
+
+document.addEventListener("click", (event) => {
+  if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  if (event.button != null && event.button !== 0) return;
+
+  const link = event.target?.closest?.('a[href^="#"]');
+  if (!link || link.hasAttribute("download") || (link.target && link.target !== "_self")) return;
+  focusHashTarget(link);
 });
 
 document.addEventListener("keydown", (event) => {
@@ -34,6 +69,8 @@ document.querySelectorAll("[data-demo-form]").forEach((form) => {
   const emailLink = form.querySelector("[data-email-link]");
   const contactSubmit = form.querySelector("[data-contact-submit]");
   const nameField = form.elements.namedItem("name");
+  const emailField = form.elements.namedItem("email");
+  const phoneField = form.elements.namedItem("phone");
   const planField = form.elements.namedItem("plan");
   const resetContactOptions = () => {
     if (contactOptions) contactOptions.hidden = true;
@@ -48,6 +85,8 @@ document.querySelectorAll("[data-demo-form]").forEach((form) => {
   });
 
   nameField?.addEventListener("input", () => nameField.setCustomValidity(""));
+  emailField?.addEventListener("input", () => phoneField?.setCustomValidity(""));
+  phoneField?.addEventListener("input", () => phoneField.setCustomValidity(""));
   form.addEventListener("input", resetContactOptions);
   form.addEventListener("change", resetContactOptions);
 
@@ -55,127 +94,54 @@ document.querySelectorAll("[data-demo-form]").forEach((form) => {
     if (nameField && !nameField.value.trim()) {
       nameField.setCustomValidity("اكتب الاسم قبل المتابعة.");
     }
+    if (emailField && phoneField && !emailField.value.trim() && !phoneField.value.trim()) {
+      phoneField.setCustomValidity("أدخل بريدك الإلكتروني أو رقم هاتفك على الأقل.");
+    }
     if (!form.reportValidity()) return;
 
     const formData = new FormData(form);
-    const name = String(formData.get("name")).trim();
-    const email = String(formData.get("email")).trim();
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const phone = String(formData.get("phone") ?? "").trim();
     const plan = String(formData.get("plan") ?? "").trim();
-    const team = form.elements.namedItem("team")?.selectedOptions[0]?.textContent.trim() ?? "غير محدد";
-    const messageLines = [
-      "مرحبًا، أود مناقشة احتياج فريقي إلى تنظيم العملاء ومتابعة المبيعات.",
+    const team = form.elements.namedItem("team")?.selectedOptions[0]?.textContent.trim() ?? "";
+    const need = form.elements.namedItem("need")?.selectedOptions[0]?.textContent.trim() ?? "";
+    const message = [
+      "مرحبًا، أود طلب عرض توضيحي حول مسار الذكي ومناقشة احتياج فريقي لإدارة العملاء ومتابعة المبيعات.",
       `الاسم: ${name}`,
-      `البريد الإلكتروني: ${email}`,
+      ...(email ? [`البريد الإلكتروني: ${email}`] : []),
+      ...(phone ? [`رقم الهاتف: ${phone}`] : []),
       `حجم الفريق: ${team}`,
-    ];
-    if (plan) messageLines.push(`الباقة محل الاهتمام: ${plan}`);
-    const message = messageLines.join("\n");
+      `الاحتياج الأساسي: ${need}`,
+      ...(plan ? [`الباقة محل الاهتمام: ${plan}`] : []),
+    ].join("\n");
 
     if (whatsappLink) {
       whatsappLink.href = `https://wa.me/201067894321?text=${encodeURIComponent(message)}`;
+      whatsappLink.target = "_blank";
+      whatsappLink.rel = "noopener noreferrer";
     }
     if (emailLink) {
       const emailParams = new URLSearchParams({
-        subject: "مناقشة احتياج الفريق",
+        subject: "طلب عرض توضيحي حول مسار الذكي",
         body: message,
       });
       emailLink.href = `mailto:skywaveads@gmail.com?${emailParams.toString()}`;
     }
-    if (contactOptions) contactOptions.hidden = false;
 
+    if (contactOptions) contactOptions.hidden = false;
     if (status) {
       status.hidden = false;
-      status.textContent = "اختر وسيلة التواصل. قد يطّلع مزود التطبيق المختار على بيانات المسودة، ولا تصل الرسالة إلى جهة التواصل إلا بعد ضغط إرسال.";
+      status.textContent = "راجع البيانات واختر وسيلة التواصل. ستُفتح مسودة الرسالة للمراجعة، ولن تُرسل حتى تؤكد الإرسال داخل التطبيق.";
       status.focus();
     }
   };
 
-  contactSubmit?.addEventListener("click", prepareContactOptions);
-  form.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" || !event.target.matches('input:not([type="hidden"])')) return;
+  form.addEventListener("submit", (event) => {
     event.preventDefault();
     prepareContactOptions();
   });
   if (contactSubmit) contactSubmit.hidden = false;
-});
-
-const periodButtons = [...document.querySelectorAll("[data-period]")];
-const exampleMetrics = {
-  week: {
-    leads: "٦٤",
-    meetings: "١٦",
-    revenue: "٧٬٨٥٠ ج",
-    leadsChange: "+٨٪",
-    meetingsChange: "+١١٪",
-    revenueChange: "+١٧٪",
-    range: "آخر ٧ أيام",
-    path: "M0 112 C35 100 53 83 85 92 S135 110 170 76 S220 91 250 63 S300 71 335 49 S385 65 420 37 S466 46 500 15",
-    point: [420, 37],
-  },
-  month: {
-    leads: "٢٤٨",
-    meetings: "٦٤",
-    revenue: "٢٨٬٤٣٠ ج",
-    leadsChange: "+١٢٪",
-    meetingsChange: "+٢٤٪",
-    revenueChange: "+٣٢٪",
-    range: "آخر ٣٠ يومًا",
-    path: "M0 119 C38 103 55 105 85 91 S135 80 170 94 S218 60 250 72 S300 46 335 63 S385 29 420 43 S465 23 500 13",
-    point: [465, 23],
-  },
-};
-
-periodButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const metrics = exampleMetrics[button.dataset.period];
-    if (!metrics) return;
-
-    periodButtons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
-    document.querySelector('[data-metric="leads"]')?.replaceChildren(metrics.leads);
-    document.querySelector('[data-metric="meetings"]')?.replaceChildren(metrics.meetings);
-    document.querySelector('[data-metric="revenue"]')?.replaceChildren(metrics.revenue);
-    document.querySelector('[data-metric-change="leads"]')?.replaceChildren(metrics.leadsChange);
-    document.querySelector('[data-metric-change="meetings"]')?.replaceChildren(metrics.meetingsChange);
-    document.querySelector('[data-metric-change="revenue"]')?.replaceChildren(metrics.revenueChange);
-    document.querySelector("[data-range-label]")?.replaceChildren(metrics.range);
-
-    const chartLine = document.querySelector("[data-chart-line]");
-    const chartArea = document.querySelector("[data-chart-area]");
-    const chartPoint = document.querySelector("[data-chart-point]");
-    chartLine?.setAttribute("d", metrics.path);
-    chartArea?.setAttribute("d", `${metrics.path} V150 H0Z`);
-    chartPoint?.setAttribute("cx", String(metrics.point[0]));
-    chartPoint?.setAttribute("cy", String(metrics.point[1]));
-  });
-});
-
-const pricingButtons = [...document.querySelectorAll("[data-pricing-period]")];
-const planPrices = [...document.querySelectorAll("[data-plan-price]")];
-const priceCaptions = [...document.querySelectorAll("[data-price-caption]")];
-
-pricingButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const period = button.dataset.pricingPeriod;
-    if (period !== "monthly" && period !== "yearly") return;
-
-    pricingButtons.forEach((item) => {
-      item.setAttribute("aria-pressed", String(item === button));
-    });
-
-    planPrices.forEach((price, index) => {
-      const nextPrice = price.getAttribute(`data-${period}`);
-      if (nextPrice) price.textContent = nextPrice;
-
-      const caption = priceCaptions[index];
-      if (caption) {
-        caption.textContent = index === 0
-          ? "دون رسوم"
-          : period === "yearly"
-            ? "شهريًا عند الدفع سنويًا"
-            : "شهريًا";
-      }
-    });
-  });
 });
 
 const workflowTabs = [...document.querySelectorAll("[data-workflow-tab]")];
@@ -229,3 +195,112 @@ workflowTabs.forEach((tab, index) => {
     activateWorkflowTab(workflowTabs[nextIndex], { moveFocus: true });
   });
 });
+
+const scrollProgress = document.querySelector(".scroll-progress > span");
+const siteHeader = document.querySelector(".site-header");
+let scrollUpdatePending = false;
+
+function updateScrollProgress() {
+  if ((!scrollProgress && !siteHeader) || scrollUpdatePending) return;
+  scrollUpdatePending = true;
+
+  window.requestAnimationFrame(() => {
+    const scrollY = window.scrollY;
+    const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = scrollableHeight > 0
+      ? Math.max(0, Math.min(scrollY / scrollableHeight, 1))
+      : 0;
+    siteHeader?.classList.toggle("is-scrolled", scrollY > 24);
+    if (scrollProgress) scrollProgress.style.transform = `scaleX(${progress})`;
+    scrollUpdatePending = false;
+  });
+}
+
+window.addEventListener("scroll", updateScrollProgress, { passive: true });
+window.addEventListener("resize", updateScrollProgress);
+updateScrollProgress();
+
+const floatingCta = document.querySelector(".floating-cta");
+if (floatingCta && "IntersectionObserver" in window) {
+  let overlapObserver;
+  let resizeTimer;
+  const overlappingTargets = new Set();
+  const overlapTargets = [...document.querySelectorAll(
+    'a, button, input:not([type="hidden"]), select, textarea, summary, [tabindex="0"], h1, h2, h3, h4, p, li, label, span, strong, small',
+  )].filter((target) => target !== floatingCta && target.textContent.trim());
+
+  function observeFloatingCtaOverlap() {
+    overlapObserver?.disconnect();
+    overlappingTargets.clear();
+    floatingCta.classList.remove("is-obscured");
+    floatingCta.inert = false;
+    floatingCta.removeAttribute("aria-hidden");
+    floatingCta.removeAttribute("tabindex");
+
+    const bounds = floatingCta.getBoundingClientRect();
+    const rootMargin = [
+      -bounds.top,
+      -(window.innerWidth - bounds.right),
+      -(window.innerHeight - bounds.bottom),
+      -bounds.left,
+    ].map((value) => `${Math.ceil(value)}px`).join(" ");
+    overlapObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) overlappingTargets.add(entry.target);
+        else overlappingTargets.delete(entry.target);
+      });
+      const isObscured = overlappingTargets.size > 0;
+      floatingCta.classList.toggle("is-obscured", isObscured);
+      floatingCta.inert = isObscured;
+      if (isObscured) {
+        floatingCta.setAttribute("aria-hidden", "true");
+        floatingCta.tabIndex = -1;
+      } else {
+        floatingCta.removeAttribute("aria-hidden");
+        floatingCta.removeAttribute("tabindex");
+      }
+    }, { rootMargin, threshold: 0 });
+
+    overlapTargets.forEach((target) => overlapObserver.observe(target));
+  }
+
+  observeFloatingCtaOverlap();
+  window.addEventListener("resize", () => {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(observeFloatingCtaOverlap, 120);
+  }, { passive: true });
+}
+
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+if ("IntersectionObserver" in window && !prefersReducedMotion.matches) {
+  const revealObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("is-visible");
+      observer.unobserve(entry.target);
+    });
+  }, { threshold: 0.12, rootMargin: "0px 0px -32px 0px" });
+
+  document.querySelectorAll(
+    ".feature-card, .workflow-layout, .integration-layout, .measurement-panel, .result-card, .role-card, .plan-card, .faq-intro, .faq-list details, .demo-shell",
+  ).forEach((element) => {
+    element.classList.add("scroll-reveal");
+    revealObserver.observe(element);
+  });
+
+  let revealFallbackPending = false;
+  window.addEventListener("scroll", () => {
+    if (revealFallbackPending) return;
+    revealFallbackPending = true;
+
+    window.requestAnimationFrame(() => {
+      revealFallbackPending = false;
+      document.querySelectorAll(".scroll-reveal:not(.is-visible)").forEach((element) => {
+        if (element.getBoundingClientRect().bottom < 0) {
+          element.classList.add("is-visible");
+          revealObserver.unobserve(element);
+        }
+      });
+    });
+  }, { passive: true });
+}
